@@ -11,6 +11,25 @@ set(CMAKE_CXX_STANDARD 17)
 # ##################################################
 
 # Set the project name.
+project(demo_file DESCRIPTION "File operation for C++")
+
+# Add the executable.
+add_executable(
+    demo_file
+    "./file/file.cpp"
+    "./file/main.cpp"
+)
+
+# Add the include and library directories.
+target_include_directories(demo_file SYSTEM PUBLIC)
+target_link_libraries(
+    demo_file
+    gtest gtest_main pthread
+)
+
+# ##################################################
+
+# Set the project name.
 project(demo_vector DESCRIPTION "Write my simple vector")
 
 # Add the executable.
