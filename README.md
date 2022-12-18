@@ -129,6 +129,14 @@ This demo implements a very simple vector. The input parameters are checked usin
 
 (TODO)
 
+The file operation is an example of "reporting error via `errno` but nobody knows what values `errno` could be in different cases" unless the developers read POSIX interface document. But the library developers have the responsibility to encapsulate the details and present the errors in a better way.
+
+If you tell the caller that the detailed error is indicated by `errno` without listing what specific error numbers can be, you are essentially encouraging them to only display the `errno`. The caller can still figure out all the possible `errno`, but usually people are lazy.
+
+## Other issues
+
+1. Many times, the warnings only describe what the warnings are but do not tell why and how to possibly solve them. As a result, only the developers who wrote the warnings understand what they are and how to deal with them. For maintainers or future developers, they need to spend more time to learn about them.
+
 ## References
 
 - [1] [Herb Sutter: When and How to Use Exceptions](https://drdobbs.com/when-and-how-to-use-exceptions/184401836)
