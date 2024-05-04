@@ -89,6 +89,8 @@ When implementing error reporting and handling, I'm proposing the following impl
   - An exception is: If the error from the lower callee makes sense to the higher caller, it is OK to simply rethrow it or just let it propagate automatically. For example, an error called `NetworkDisconnected` may make pretty much sense and the program probably cannot fix it at all. In this case, if the lowest callee detects this issue, it is OK to throw it all the way to the top caller because this error makes sense to all the levels. However, an error of `FileNotFound` may make sense to some lower level callers but may not make sense to the higher level callers if the higher level callers have no knowledge about the low-level storage details. In this case, the error `FileNotFound` should be caught before it is thrown to the caller that doesn't know anything about storage details.
 3. It's OK to catch generic exceptions such as `std::exception` or `...` in C++ or similar constructs in other programming languages. But this should be treated as **truly unexpected** situations that **nobody knows** how to deal with them so the only valid handling is to terminate the program, ask the user to report a bug, so the developers can investigate further. In other words, during the testing phase, if somebody knows some condition may happen (even rarely) but does not catch it with a specific exception, it should be considered as a bug.
 
+Good error reporting should not only tell you what is wrong but also provide the cause chain so you know why it is wrong, and then quickly find the root cause.
+
 ## Others
 
 [1] quotes the words by Stroustrup:
