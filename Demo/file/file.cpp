@@ -29,6 +29,7 @@ file::open_read()
 {
   // Eventually, POSIX `open` is called. Its page details the possible errors:
   // https://pubs.opengroup.org/onlinepubs/9699919799/functions/open.html
+  // https://manpages.ubuntu.com/manpages/trusty/man2/open.2.html
   //
   // TODO(ywen): I need to study the behavior of POSIX `open` to understand
   // how it may fail in each case, and then implement the corresponding
