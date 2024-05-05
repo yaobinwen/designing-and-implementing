@@ -127,6 +127,10 @@ This demo implements a very simple vector. The input parameters are checked usin
 1. `assert` is more logically clear because it states the violation of pre-conditions (i.e., mistakes by the caller). However, it may make writing test code harder because `assert` crashes the program.
 2. `assert` may also require the caller do sufficient tests to make sure all the calls of the function are covered, otherwise, there may be run-time crashes.
 
+TODOs:
+- I probably need to implement my own `assert` so it doesn't just abort the program when it fails. With the default abortion behavior, I can't write test code to test the assertions.
+- Consider `vector`'s copy constructor and copy assignment operator.
+
 ### Demo: File
 
 (TODO)

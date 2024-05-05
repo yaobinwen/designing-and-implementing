@@ -30,7 +30,8 @@ public:
   ///
   /// Throws:
   /// - `std::bad_alloc`: When out of memory.
-  /// - Exceptions thrown by _Ty's copy assignment operator.
+  /// - Exceptions thrown by _Ty's copy assignment operator. This `vector` does
+  ///   not catch them so the `vector` users must deal with them.
   constexpr vector(std::initializer_list<_Ty> init);
 
   /// Destructor (noexcept by default but I want it to be explicit).
@@ -52,7 +53,8 @@ public:
   ///
   /// Throws:
   /// - `std::bad_alloc`: When out of memory.
-  /// - Exceptions thrown by _Ty's copy assignment operator.
+  /// - Exceptions thrown by _Ty's copy assignment operator. This `vector` does
+  ///   not catch them so the `vector` users must deal with them.
   constexpr void
   insert(const size_t index, _Ty const & value);
 
@@ -60,7 +62,8 @@ public:
   ///
   /// Throws:
   /// - `std::bad_alloc`: When out of memory.
-  /// - Exceptions thrown by _Ty's copy assignment operator.
+  /// - Exceptions thrown by _Ty's copy assignment operator. This `vector` does
+  ///   not catch them so the `vector` users must deal with them.
   constexpr void
   erase(const size_t index);
 
@@ -85,13 +88,12 @@ public:
   constexpr _Ty const &
   at(const size_t i) const noexcept;
 
-  /// Return the reference to the ith (0-based) element, without bounds
-  /// checking.
+  /// Return the reference to the ith (0-based) element, with bounds checking.
   constexpr _Ty &
   operator[](const size_t i) noexcept;
 
-  /// Return the constant reference to the ith (0-based) element, without
-  /// bounds checking.
+  /// Return the constant reference to the ith (0-based) element, with bounds
+  /// checking.
   constexpr _Ty const &
   operator[](const size_t i) const noexcept;
 
@@ -109,8 +111,24 @@ private:
   _get_new_capacity(const size_t capacity) noexcept;
 
 private:
+  /// The current number of elements inside the vector.
+  ///
+  /// Invariants:
+  /// - `m_size <= m_capacity`.
   unsigned int m_size;
+
+  /// The number of total slots that the vector can use to store elements
+  /// having to allocate more slots.
+  ///
+  /// Invariants:
+  /// - `m_size <= m_capacity`
   unsigned int m_capacity;
+
+  /// The raw pointer to the underlying memory storage.
+  ///
+  /// Invariants:
+  /// - `0 == m_size && nullptr == m_vec`, OR
+  /// - `0 < m_size && nullptr != m_vec`.
   _Ty * m_vec;
 };
 
@@ -124,7 +142,7 @@ constexpr vector<_Ty>::vector() noexcept
 template<class _Ty>
 constexpr vector<_Ty>::vector(std::initializer_list<_Ty> init)
 {
-  const size_t count = init.size();  // Does not throw.
+  const size_t count = init.size();  // `size()` does not throw.
 
   if (0 == count)
   {
@@ -148,9 +166,9 @@ constexpr vector<_Ty>::vector(std::initializer_list<_Ty> init)
     ++i;
   }
 
-  _Ty * tmp_vec = new_vec.release();  // Does not throw.
+  _Ty * tmp_vec = new_vec.release();  // `release()` does not throw.
 
-  std::swap(tmp_vec, m_vec);  // Does not throw.
+  std::swap(tmp_vec, m_vec);  // `std::swap()` does not throw.
   m_size = count;
   m_capacity = count;
 
@@ -211,7 +229,8 @@ vector<_Ty>::insert(const size_t index, _Ty const & value)
   // `new` may throw `std::bad_alloc`.
   std::unique_ptr<_Ty[]> new_vec(new _Ty[m_capacity]);
 
-  // Copy the first half to the same location in the new vector.
+  // Copy the first half (i.e., before the position that `index` points at) to
+  // the same location in the new vector.
   for (size_t i = 0; i < index; ++i)
   {
     // If _Ty's copy assignment throws, `new_vec` will de-allocate the
@@ -219,7 +238,8 @@ vector<_Ty>::insert(const size_t index, _Ty const & value)
     new_vec[i] = m_vec[i];
   }
 
-  // Copy the second half to the location with 1 offset in the new vector.
+  // Copy the second half (i.e., after the position that `index` points at) to
+  // the location with 1 offset in the new vector.
   for (size_t i = m_size; i > index; --i)
   {
     // If _Ty's copy assignment throws, `new_vec` will de-allocate the
@@ -258,6 +278,7 @@ template<class _Ty>
 constexpr void
 vector<_Ty>::erase(const size_t index)
 {
+  assert(0U < m_size);
   assert((0U <= index));
   assert((index < m_size));
 
@@ -278,7 +299,8 @@ vector<_Ty>::erase(const size_t index)
     // `new` may throw `std::bad_alloc`.
     std::unique_ptr<_Ty[]> new_vec(new _Ty[m_capacity]);
 
-    // Copy the first half to the same location in the new vector.
+    // Copy the first half (i.e., before the position that `index` points at)
+    // to the same location in the new vector.
     for (size_t i = 0; i < index; ++i)
     {
       // If _Ty's copy assignment throws, `new_vec` will de-allocate the
@@ -286,7 +308,8 @@ vector<_Ty>::erase(const size_t index)
       new_vec[i] = m_vec[i];
     }
 
-    // Copy the second half to the location with 1 offset in the new vector.
+    // Copy the second half (i.e., after the position that `index` points at)
+    // to the location with 1 offset in the new vector.
     for (size_t i = index; i < new_size; ++i)
     {
       // If _Ty's copy assignment throws, `new_vec` will de-allocate the
@@ -294,8 +317,8 @@ vector<_Ty>::erase(const size_t index)
       new_vec[i] = m_vec[i + 1];
     }
 
-    _Ty * tmp_vec = new_vec.release();  // release() doesn't throw.
-    std::swap(tmp_vec, m_vec);          // std::swap() doesn't throw.
+    _Ty * tmp_vec = new_vec.release();  // `release()` doesn't throw.
+    std::swap(tmp_vec, m_vec);          // `std::swap()` doesn't throw.
 
     // Ideally, deleting the array should not throw. If it throws because the
     // destructor throws, we can't handle it gracefully and have to terminate
